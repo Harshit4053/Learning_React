@@ -2,24 +2,31 @@ import { useEffect, useState } from "react";
 
 function useCurrencyInfo(currency) {
     const [data, setData] = useState({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch(`https://open.er-api.com/v6/latest/${currency}`)
-            .then((res) => res.json())
+        // Correct API URL for the latest exchange rates from a base currency (USD)
+        const url = `https://open.er-api.com/v6/latest/${currency}`;
+
+        fetch(url)
             .then((res) => {
-                if (res.rates) {
-                    setData(res.rates); // Set the full "rates" object
-                } else {
-                    setData({}); // Fallback to empty object
+                if (!res.ok) {
+                    throw new Error("Failed to fetch data");
                 }
+                return res.json();
+            })
+            .then((res) => {
+                setData(res.rates); // Store exchange rates data
+                setLoading(false);
             })
             .catch((error) => {
-                console.error("Error fetching data:", error);
-                setData({});
+                setError(error.message);
+                setLoading(false);
             });
     }, [currency]);
 
-    return data; 
+    return { data, loading, error };
 }
 
 export default useCurrencyInfo;
